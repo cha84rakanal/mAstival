@@ -10,6 +10,7 @@
     
     //WebRTC module
     let call;
+    let video;
 
     window.onload = () => {
 
@@ -51,24 +52,106 @@
             // UI stuff
             existingCall = call;
         }
+
+        //video タグの取得
+        video = document.getElementById('their-video');
+        video.autoplay = true;  // これを外すと、スタート時の映像で停止します
+
+        // カメラ画像のサイズを記録しておく。後で使う。
+        video.addEventListener('loadeddata', function() {
+        // Chromeは問題無いが、Firefoxだと、'loadeddata' イベントでvideoWidthらが埋まっていないので、値が得られるまで待機
+        (function getVideoResolution() {
+            vidWidth = video.videoWidth;
+            vidHeight = video.videoHeight;
+            if(vidWidth != 0) {
+                console.log("video width: " + vidWidth + " height: " + vidHeight);
+                init(); // カメラの映像が流れ始めたら、Three.js内の準備を始める
+            } else {
+                setTimeout(getVideoResolution, 250);
+            }
+        })();
+        });
     
     }
 
     //WebGL module
-    window.addEventListener('DOMContentLoaded', init);
+    //window.addEventListener('DOMContentLoaded', init);
  
     function init() {
-        // ここに処理を追加していきます
+
+        const width = 960;
+        const height = 540;
+
+        // レンダラーを作成
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#myCanvas')
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        //camera.position.set(0, 0, -1000);
+
+        //const camera = new THREE.OrthographicCamera(vidWidth/-1, vidWidth/1, vidHeight/1, vidHeight/-1, 1, 2000);
+        camera.position.z = 2000;  // カメラの near/far クリッピングと合わせて設定する
+
+        // 箱を作成
+        //const geometry = new THREE.BoxGeometry(500, 500, 500);
+        //const material = new THREE.MeshStandardMaterial({color: 0x0000FF});
+        //const box = new THREE.Mesh(geometry, material);
+        //scene.add(box);
+
+        // 平行光源
+        const light = new THREE.DirectionalLight(0xFFFFFF);
+        light.intensity = 2; // 光の強さを倍に
+        light.position.set(1, 1, 1);
+        // シーンに追加
+        scene.add(light);
+
+        const videoTexture = new THREE.Texture(video);  // なんとこれだけでテクスチャとして使える！
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        const videoMaterial = new THREE.MeshBasicMaterial({  // マテリアルにする。カメラ画像をそのまま使いたいので、ライティング等は無し。
+            map: videoTexture
+        });
+
+        const planeGeometry = new THREE.PlaneGeometry( vidWidth, vidHeight, 1, 1 );
+        const plane = new THREE.Mesh( planeGeometry, videoMaterial );  // 平面に書き込む
+        plane.position.z = 0;
+        scene.add(plane);  // シーンに追加
+
+        // 初回実行
+        tick();
+
+        function tick() {
+            if(video.readyState === video.HAVE_ENOUGH_DATA) {
+                if(videoTexture) videoTexture.needsUpdate = true;  // ここがポイント
+            }
+            requestAnimationFrame(tick);
+
+            // 箱を回転させる
+            //box.rotation.x += 0.01;
+            //box.rotation.y += 0.01;
+            plane.rotation.x += 0.01;
+            plane.rotation.y += 0.01;
+
+            // レンダリング
+            renderer.render(scene, camera);
+        }
     }
 
-    
     </script>
 </head>
 
 <body>
 <canvas id="myCanvas"></canvas>
 
-<video id="their-video" autoplay playsinline></video>
+<video id="their-video" style="display:none" autoplay playsinline></video>
 <button href="#" type="submit" onclick="call()">Call</button>
 
 </body>
