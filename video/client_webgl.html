@@ -1,0 +1,65 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SkyWay - Video chat example</title>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
+    <script type="text/javascript" src="../key.js"></script>
+    <script type="text/javascript">
+    
+    let call;
+
+    window.onload = () => {
+
+        // Compatibility shim
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+
+        const peer = new Peer({
+            key: window.__SKYWAY_KEY__,
+            debug: 3,
+        });
+
+        let localStream;
+        let existingCall;
+
+        peer.on('open', () => {
+            //$('#my-id').text(peer.id);
+            console.log(peer.id);
+        });
+
+        call = () => {
+            const callobj = peer.call("serverhoge1");
+            step3(callobj);
+        };
+
+        function step3(callobj){
+            // Hang up on an existing call if present
+            if (existingCall) {
+                existingCall.close();
+            }
+            // Wait for stream on the call, then set peer video display
+            callobj.on('stream', stream => {
+                const el = $('#their-video').get(0);
+                el.srcObject = stream;
+                el.play();
+                console.log("played");
+            });
+
+            // UI stuff
+            existingCall = call;
+        }
+    
+    }
+    
+    </script>
+</head>
+
+<body>
+
+<video id="their-video" autoplay playsinline></video>
+
+<button href="#" type="submit" onclick="call()">Call</button>
+
+</body>
+</html>
