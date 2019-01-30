@@ -5,8 +5,10 @@
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript" src="//cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
     <script type="text/javascript" src="../key.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script>
     <script type="text/javascript">
     
+    //WebRTC module
     let call;
 
     window.onload = () => {
@@ -51,14 +53,22 @@
         }
     
     }
+
+    //WebGL module
+    window.addEventListener('DOMContentLoaded', init);
+ 
+    function init() {
+        // ここに処理を追加していきます
+    }
+
     
     </script>
 </head>
 
 <body>
+<canvas id="myCanvas"></canvas>
 
 <video id="their-video" autoplay playsinline></video>
-
 <button href="#" type="submit" onclick="call()">Call</button>
 
 </body>
