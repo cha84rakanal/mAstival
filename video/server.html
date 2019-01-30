@@ -1,0 +1,89 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SkyWay - Video chat example</title>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
+    <script type="text/javascript">
+
+    window.onload = () => {
+
+        // Compatibility shim
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+
+        const peer = new Peer("serverhoge1",{
+            key: "",
+            debug: 3,
+        });
+
+        let localStream;
+        let existingCall;
+
+        peer.on('open', () => {
+            //$('#my-id').text(peer.id);
+            console.log(peer.id);
+            step1();
+        });
+
+        function step1() {
+            // Get audio/video stream
+            //const audioSource = $('#audioSource').val();
+            //const videoSource = $('#videoSource').val();
+            //const constraints = {
+            //audio: {deviceId: audioSource ? {exact: audioSource} : undefined},
+            //video: {deviceId: videoSource ? {exact: videoSource} : undefined},
+            //};
+
+
+            navigator.getUserMedia({audio: true, video: true}, function(stream){
+                // Set your video displays
+                //$('#my-video').prop('src', URL.createObjectURL(stream));
+                $('#my-video').get(0).srcObject = stream;
+        
+                localStream = stream;
+
+                if(existingCall) {
+                    existingCall.replaceStream(stream);
+                    return;
+                }
+                //step2();
+            }, function(err){console.error(err);});
+        }
+
+        peer.on('call', call => {
+            // Answer the call automatically (instead of prompting user) for demo purposes
+            call.answer(localStream);
+            step3(call);
+        });
+
+
+        function step3(call) {
+            // Hang up on an existing call if present
+            if (existingCall) {
+                existingCall.close();
+            }
+            // Wait for stream on the call, then set peer video display
+            //call.on('stream', stream => {
+            //const el = $('#their-video').get(0);
+            //el.srcObject = stream;
+            //el.play();
+            //});
+
+            // UI stuff
+            existingCall = call;
+            //$('#their-id').text(call.remoteId);
+            //call.on('close', step2);
+            //$('#step1, #step2').hide();
+            //$('#step3').show();
+        }
+
+    }
+
+    </script>
+</head>
+
+<body>
+    <video id="my-video" muted="true" autoplay playsinline></video>
+</body>
+</html>
