@@ -1,0 +1,180 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SkyWay - Video chat example</title>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
+    <script type="text/javascript" src="../key.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script>
+    
+    <script src="js/shaders/CopyShader.js"></script>
+    <script src="js/shaders/DigitalGlitch.js"></script>
+
+    <script src="js/postprocessing/EffectComposer.js"></script>
+    <script src="js/postprocessing/RenderPass.js"></script>
+    <script src="js/postprocessing/MaskPass.js"></script>
+    <script src="js/postprocessing/ShaderPass.js"></script>
+    <script src="js/postprocessing/GlitchPass.js"></script>
+    
+    <script type="text/javascript">
+    
+    //WebRTC module
+    let call;
+    let video;
+
+    window.onload = () => {
+
+        // Compatibility shim
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+
+        const peer = new Peer({
+            key: window.__SKYWAY_KEY__,
+            debug: 3,
+        });
+
+        let localStream;
+        let existingCall;
+
+        peer.on('open', () => {
+            //$('#my-id').text(peer.id);
+            console.log(peer.id);
+        });
+
+        call = () => {
+            const callobj = peer.call("serverhoge1");
+            step3(callobj);
+        };
+
+        function step3(callobj){
+            // Hang up on an existing call if present
+            if (existingCall) {
+                existingCall.close();
+            }
+            // Wait for stream on the call, then set peer video display
+            callobj.on('stream', stream => {
+                const el = $('#their-video').get(0);
+                el.srcObject = stream;
+                el.play();
+                console.log("played");
+            });
+
+            // UI stuff
+            existingCall = call;
+        }
+
+        //video タグの取得
+        video = document.getElementById('their-video');
+        video.autoplay = true;  // これを外すと、スタート時の映像で停止します
+
+        // カメラ画像のサイズを記録しておく。後で使う。
+        video.addEventListener('loadeddata', function() {
+        // Chromeは問題無いが、Firefoxだと、'loadeddata' イベントでvideoWidthらが埋まっていないので、値が得られるまで待機
+        (function getVideoResolution() {
+            vidWidth = video.videoWidth;
+            vidHeight = video.videoHeight;
+            if(vidWidth != 0) {
+                console.log("video width: " + vidWidth + " height: " + vidHeight);
+                init(); // カメラの映像が流れ始めたら、Three.js内の準備を始める
+            } else {
+                setTimeout(getVideoResolution, 250);
+            }
+        })();
+        });
+    
+    }
+
+    //WebGL module
+    //window.addEventListener('DOMContentLoaded', init);
+ 
+    function init() {
+
+        const width = 960;
+        const height = 540;
+
+        // レンダラーを作成
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#myCanvas')
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        //camera.position.set(0, 0, -1000);
+
+        //const camera = new THREE.OrthographicCamera(vidWidth/-1, vidWidth/1, vidHeight/1, vidHeight/-1, 1, 2000);
+        camera.position.z = 1000;  // カメラの near/far クリッピングと合わせて設定する
+
+        let composer = new THREE.EffectComposer(renderer);
+        let renderPass = new THREE.RenderPass(scene, camera);
+        let effectBloom = new THREE.GlitchPass();
+
+        composer.addPass(renderPass);
+        composer.addPass(effectBloom);
+
+        var toScreen = new THREE.ShaderPass(THREE.CopyShader);
+        toScreen.renderToScreen = true;
+        composer.addPass(toScreen);
+
+        // 箱を作成
+        //const geometry = new THREE.BoxGeometry(500, 500, 500);
+        //const material = new THREE.MeshStandardMaterial({color: 0x0000FF});
+        //const box = new THREE.Mesh(geometry, material);
+        //scene.add(box);
+
+        // 平行光源
+        const light = new THREE.DirectionalLight(0xFFFFFF);
+        light.intensity = 2; // 光の強さを倍に
+        light.position.set(1, 1, 1);
+        // シーンに追加
+        scene.add(light);
+
+        const videoTexture = new THREE.Texture(video);  // なんとこれだけでテクスチャとして使える！
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        const videoMaterial = new THREE.MeshBasicMaterial({  // マテリアルにする。カメラ画像をそのまま使いたいので、ライティング等は無し。
+            map: videoTexture
+        });
+
+        const planeGeometry = new THREE.PlaneGeometry( vidWidth, vidHeight, 1, 1 );
+        const plane = new THREE.Mesh( planeGeometry, videoMaterial );  // 平面に書き込む
+        plane.position.z = 0;
+        scene.add(plane);  // シーンに追加
+
+        // 初回実行
+        tick();
+
+        function tick() {
+            if(video.readyState === video.HAVE_ENOUGH_DATA) {
+                if(videoTexture) videoTexture.needsUpdate = true;  // ここがポイント
+            }
+            requestAnimationFrame(tick);
+
+            // 箱を回転させる
+            //box.rotation.x += 0.01;
+            //box.rotation.y += 0.01;
+            plane.rotation.x += 0.01;
+            plane.rotation.y += 0.01;
+
+            // レンダリング
+            //renderer.render(scene, camera);
+            composer.render();
+        }
+    }
+
+    </script>
+</head>
+
+<body>
+<canvas id="myCanvas"></canvas>
+
+<video id="their-video" style="display:none" autoplay playsinline></video>
+<button href="#" type="submit" onclick="call()">Call</button>
+
+</body>
+</html>
