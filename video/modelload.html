@@ -40,18 +40,18 @@
         controls = new THREE.OrbitControls(camera);
 
         // 平行光源
-        const light = new THREE.DirectionalLight(0xFFFFFF,0.8);
-        light.intensity = 2; // 光の強さを倍に
-        light.position.set(1, 1, 1);
+        //const light = new THREE.DirectionalLight(0xFFFFFF,0.8);
+        //light.intensity = 2; // 光の強さを倍に
+        //light.position.set(1, 1, 1);
         // シーンに追加
-        scene.add(light);
+        //scene.add(light);
 
         const ambientLight = new THREE.AmbientLight(0xffffff,0.8);
         scene.add(ambientLight);
 
-        var pointLight = new THREE.PointLight( 0xffffff, 0.8 );
+        //var pointLight = new THREE.PointLight( 0xffffff, 0.8 );
 		//camera.add( pointLight );
-        scene.add( camera );
+        //scene.add( camera );
         
 
         var skyGeo = new THREE.SphereGeometry(900, 25, 25);
