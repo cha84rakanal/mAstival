@@ -4,3 +4,6 @@ node_modules/*
 package-lock.json
 key.js
 video/js/*
+cockpit-03_obj.obj
+cockpit-03_obj.mtl
+*.tga
