@@ -7,3 +7,8 @@ video/js/*
 cockpit-03_obj.obj
 cockpit-03_obj.mtl
 *.tga
+cockpit-03_blender.glb
+socket.io.js
+socket.io.js.map
+socket.io.slim.js
+socket.io.slim.js.map
