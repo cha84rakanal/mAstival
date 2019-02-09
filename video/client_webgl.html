@@ -6,6 +6,10 @@
     <script type="text/javascript" src="//cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
     <script type="text/javascript" src="../key.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script>
+    <script type = "text/javascript" src = "./js/loaders/MTLLoader.js"></script>
+    <script type = "text/javascript" src = "./js/loaders/GLTFLoader.js"></script>
+    <script type = "text/javascript" src = "./js/loaders/TGALoader.js"></script>
+    <script type = "text/javascript" src = "./js/controls/OrbitControls.js"></script>
     <script type="text/javascript">
     
     //WebRTC module
@@ -81,6 +85,7 @@
 
         const width = 960;
         const height = 540;
+        let controls;
 
         // レンダラーを作成
         const renderer = new THREE.WebGLRenderer({
@@ -91,13 +96,17 @@
 
         // シーンを作成
         const scene = new THREE.Scene();
+        var axis = new THREE.AxisHelper(1000);   
+        scene.add(axis);
 
         // カメラを作成
-        const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 10000);
         //camera.position.set(0, 0, -1000);
 
         //const camera = new THREE.OrthographicCamera(vidWidth/-1, vidWidth/1, vidHeight/1, vidHeight/-1, 1, 2000);
-        camera.position.z = 2000;  // カメラの near/far クリッピングと合わせて設定する
+        //camera.position.z = 2000;  // カメラの near/far クリッピングと合わせて設定する
+        camera.position.z = 1;  // カメラの near/far クリッピングと合わせて設定する
+        controls = new THREE.OrbitControls(camera);
 
         // 箱を作成
         //const geometry = new THREE.BoxGeometry(500, 500, 500);
@@ -106,11 +115,14 @@
         //scene.add(box);
 
         // 平行光源
-        const light = new THREE.DirectionalLight(0xFFFFFF);
-        light.intensity = 2; // 光の強さを倍に
-        light.position.set(1, 1, 1);
+        //const light = new THREE.DirectionalLight(0xFFFFFF);
+        //light.intensity = 2; // 光の強さを倍に
+        //light.position.set(1, 1, 1);
         // シーンに追加
-        scene.add(light);
+        //scene.add(light);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff,0.8);
+        scene.add(ambientLight);
 
         const videoTexture = new THREE.Texture(video);  // なんとこれだけでテクスチャとして使える！
         videoTexture.minFilter = THREE.LinearFilter;
@@ -120,9 +132,36 @@
             map: videoTexture
         });
 
+        var skyGeo = new THREE.SphereGeometry(900, 25, 25);
+        var sloader  = new THREE.TextureLoader(),
+        texture = sloader.load( "dayfair_skydome_1_dusk.jpg" );
+        var material = new THREE.MeshPhongMaterial({ 
+            map: texture,
+        });
+        var sky = new THREE.Mesh(skyGeo, material);
+        sky.material.side = THREE.BackSide;
+        //sky.rotation.z = Math.PI;
+        scene.add(sky);
+
+        //cockpit-03_blender.glb
+        // OBJ MTLの読み込み
+        var loader = new THREE.GLTFLoader();
+            loader.load( './cockpit-03_blender.glb', function ( gltf ) {
+                gltf.scene.scale.set(10,10,10);
+                gltf.scene.position.z = 15;
+                gltf.scene.position.y = 0;
+                gltf.scene.rotation.y = Math.PI;
+                console.log(gltf.scene);
+                scene.add( gltf.scene );
+            }, undefined, function ( error ) {
+                console.error( error );
+        });
+
         const planeGeometry = new THREE.PlaneGeometry( vidWidth, vidHeight, 1, 1 );
         const plane = new THREE.Mesh( planeGeometry, videoMaterial );  // 平面に書き込む
-        plane.position.z = 0;
+        plane.position.z = -50;
+        plane.rotation.z = Math.PI;
+        plane.scale.set(0.1,0.1,0.1);
         scene.add(plane);  // シーンに追加
 
         // 初回実行
@@ -137,8 +176,8 @@
             // 箱を回転させる
             //box.rotation.x += 0.01;
             //box.rotation.y += 0.01;
-            plane.rotation.x += 0.01;
-            plane.rotation.y += 0.01;
+            //plane.rotation.x += 0.01;
+            //plane.rotation.y += 0.01;
 
             // レンダリング
             renderer.render(scene, camera);
