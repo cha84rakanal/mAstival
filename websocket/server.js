@@ -38,7 +38,7 @@ io.on('connection', function (socket) {
 
     //接続切れイベントを設定
     socket.on("disconnect", function () {
-        //console.log('disconnect');
+        console.log('disconnect');
     });
 
     socket.on('remote_wakeup',function(data){
@@ -46,10 +46,14 @@ io.on('connection', function (socket) {
         console.log('remote on');
     });
 
+    socket.on('controller_wakeup',function(data){
+        console.log('controller on');
+    });
+
     socket.on('client_wakeup',function(data){
         onClient = true;
         console.log('client on');
-        io.emit("call",onServer);
+        setTimeout(() => {io.emit("call",onServer)},2000);
     });
 
 });
