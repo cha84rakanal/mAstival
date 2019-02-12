@@ -11,16 +11,18 @@
     <script type = "text/javascript" src = "../video/js/loaders/GLTFLoader.js"></script>
     <script type = "text/javascript" src = "../video/js/loaders/TGALoader.js"></script>
     <script type = "text/javascript" src = "../video/js/controls/OrbitControls.js"></script>
+    <script type = "text/javascript" src = "../video/js/vr/WebVR.js"></script>
+    <script type = "text/javascript" src = "./webvr-polyfill.js"></script>
     <script type="text/javascript">
 
     //接続先の指定  
-    const url = "https://127.0.0.1:8000";
+    const url = "https://192.168.1.14:8000";
 
     //接続
     let socket;
     
     //WebRTC module
-    let call;
+    let call_f;
     let video;
 
     window.onload = () => {
@@ -45,6 +47,13 @@
             socket.emit("client_wakeup","client on!");
         });
 
+        function call(){
+            const callobj = peer.call("serverhoge1");
+            step3(callobj);
+        };
+
+        call_f = call;
+
         socket.on('call',function(data){
             if(data === true){
                 call();
@@ -52,11 +61,6 @@
                 alert("Remote System no Connection");
             }
         });
-
-        call = () => {
-            const callobj = peer.call("serverhoge1");
-            step3(callobj);
-        };
 
         function step3(callobj){
             // Hang up on an existing call if present
@@ -111,6 +115,12 @@
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(width, height);
+        renderer.vr.enabled = true;
+        renderer.setAnimationLoop(tick);
+
+        document.body.appendChild(WEBVR.createButton(renderer));
+
+        const polyfill = new WebVRPolyfill();
 
         // シーンを作成
         const scene = new THREE.Scene();
@@ -189,7 +199,7 @@
             if(video.readyState === video.HAVE_ENOUGH_DATA) {
                 if(videoTexture) videoTexture.needsUpdate = true;  // ここがポイント
             }
-            requestAnimationFrame(tick);
+            //requestAnimationFrame(tick);
 
             // 箱を回転させる
             //box.rotation.x += 0.01;
@@ -209,7 +219,7 @@
 <canvas id="myCanvas"></canvas>
 
 <video id="their-video" style="display:none" autoplay playsinline></video>
-<button href="#" type="submit" onclick="call()">Call</button>
+<button href="#" type="submit" onclick="call_f()">Call</button>
 
 </body>
 </html>
