@@ -1,5 +1,7 @@
 #include <nds.h>
 #include <stdlib.h>
+#include <stdlib.h>
+#include <time.h>
 
 //texture_bin.h is created automagicaly from the texture.bin placed in arm9/resources
 //texture.bin is a raw 128x128 16 bit image.  I will release a tool for texture conversion 
@@ -10,8 +12,7 @@ int main() {
 	
 	int textureID;
 
-	float rotateX = 0.0;
-	float rotateY = 0.0;
+	srand((unsigned int)time(NULL));
 
 	//set mode 0, enable BG0 and set it to 3D
 	videoSetMode(MODE_0_3D);
@@ -55,9 +56,6 @@ int main() {
 
 		//move it away from the camera
 		glTranslatef32(0, 0, floattof32(-1));
-				
-		glRotateX(rotateX);
-		glRotateY(rotateY);
 		
 		//glMaterialf(GL_AMBIENT, RGB15(16,16,16));
 		//glMaterialf(GL_DIFFUSE, RGB15(16,16,16));
@@ -79,12 +77,14 @@ int main() {
 		
 		u16 keys = keysHeld();
 		
-		if((keys & KEY_UP)) rotateX += 3;
-		if((keys & KEY_DOWN)) rotateX -= 3;
-		if((keys & KEY_LEFT)) rotateY += 3;
-		if((keys & KEY_RIGHT)) rotateY -= 3;
+		//if((keys & KEY_UP)) rotateX += 3;
+		//if((keys & KEY_DOWN)) rotateX -= 3;
+		//if((keys & KEY_LEFT)) rotateY += 3;
+		//if((keys & KEY_RIGHT)) rotateY -= 3;
 		
 		glBindTexture(0, textureID);
+
+		glTranslatef32(((float)rand()/(float)(RAND_MAX))*500, ((float)rand()/(float)(RAND_MAX))*500, 0);
 
 		//draw the obj
 		glBegin(GL_QUAD);
