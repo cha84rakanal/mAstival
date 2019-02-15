@@ -12,6 +12,10 @@ int main() {
 	
 	int textureID;
 
+	int pos = 0;
+	int ison = 0;
+	int m_state = 0;
+
 	srand((unsigned int)time(NULL));
 
 	//set mode 0, enable BG0 and set it to 3D
@@ -25,6 +29,8 @@ int main() {
 	
 	// enable antialiasing
 	glEnable(GL_ANTIALIAS);
+
+	glEnable(GL_BLEND);
 	
 	// setup the rear plane
 	glClearColor(31,31,31,31); // BG must be opaque for AA to work
@@ -38,7 +44,7 @@ int main() {
 
 	glGenTextures(1, &textureID);
 	glBindTexture(0, textureID);
-	glTexImage2D(0, 0, GL_RGB, TEXTURE_SIZE_256 , TEXTURE_SIZE_256, 0, TEXGEN_TEXCOORD, (u8*)texture2_bin);
+	glTexImage2D(0, 0, GL_RGB, TEXTURE_SIZE_256 , TEXTURE_SIZE_256, 0, TEXGEN_TEXCOORD, (u8*)texture2_bin); //ここいけるんちゃう？
 	
 	
 	//any floating point gl call is being converted to fixed prior to being implemented
@@ -70,9 +76,6 @@ int main() {
 		//ds uses a table for shinyness..this generates a half-ass one
 		glMaterialShinyness();
 
-		//not a real gl function and will likely change
-		glPolyFmt(POLY_ALPHA(31) | POLY_CULL_BACK);
-
 		scanKeys();
 		
 		u16 keys = keysHeld();
@@ -81,10 +84,79 @@ int main() {
 		//if((keys & KEY_DOWN)) rotateX -= 3;
 		//if((keys & KEY_LEFT)) rotateY += 3;
 		//if((keys & KEY_RIGHT)) rotateY -= 3;
+
+		//not a real gl function and will likely change
+		glPolyFmt(POLY_ALPHA(31) | POLY_CULL_BACK | POLY_MODULATION );
 		
 		glBindTexture(0, textureID);
 
-		glTranslatef32(((float)rand()/(float)(RAND_MAX))*500, ((float)rand()/(float)(RAND_MAX))*500, 0);
+		//glTranslatef32(((float)rand()/(float)(RAND_MAX))*500, ((float)rand()/(float)(RAND_MAX))*500, 0);
+		//1/30発生
+		//0-1 : ((float)rand()/(float)(RAND_MAX))
+		// ((float)rand()/(float)(RAND_MAX)) * 31
+		//		
+
+		if(((int)(((float)rand()/(float)(RAND_MAX)) * 62)) == 15 && ison == 0){
+			ison = 1;
+			m_state = 1;
+		}
+
+		if(m_state == 0){
+			pos = 0;
+		}else if(m_state == 1){
+			pos = 500;
+			m_state = 2;
+		}else if(m_state == 2){
+			pos = 1000;
+			m_state = 3;
+		}else if(m_state == 3){
+			//pos = 1000;
+			m_state = 4;
+		}else if(m_state == 4){
+			//pos = 1000;
+			m_state = 7;
+		}else if(m_state == 5){
+			//pos = 1000;
+			m_state = 6;		
+		}else if(m_state == 6){
+			m_state = 7;
+		}else if(m_state == 7){
+			pos = 500;
+			m_state = 8;
+		}else if(m_state == 8){
+			ison = 0;
+			m_state = 0;
+		}
+
+		glTranslatef32(0 + pos,0,0);
+
+		//draw the obj
+		glBegin(GL_QUAD);
+			glNormal(NORMAL_PACK(0,inttov10(-1),0));
+
+			GFX_TEX_COORD = (TEXTURE_PACK(0, inttot16(256)));
+			//glVertex3v16(floattov16(-0.5),	floattov16(-0.5), 0 );
+			glVertex3v16(floattov16(-1.0),	floattov16(-1.0), 0 );
+	
+			GFX_TEX_COORD = (TEXTURE_PACK(inttot16(256),inttot16(256)));
+			//glVertex3v16(floattov16(0.5),	floattov16(-0.5), 0 );
+			glVertex3v16(floattov16(1.0),	floattov16(-1.0), 0 );
+	
+			GFX_TEX_COORD = (TEXTURE_PACK(inttot16(256 ), 0));
+			//glVertex3v16(floattov16(0.5),	floattov16(0.5), 0 );
+			glVertex3v16(floattov16(1.0),	floattov16(1.0), 0 );
+
+			GFX_TEX_COORD = (TEXTURE_PACK(0,0));
+			//glVertex3v16(floattov16(-0.5),	floattov16(0.5), 0 );
+			glVertex3v16(floattov16(-1.0),	floattov16(1.0), 0 );
+		
+		glEnd();
+
+
+/*
+		glPolyFmt(POLY_ALPHA(15) | POLY_CULL_BACK | POLY_MODULATION );
+
+		glTranslatef32(2000,0,0);
 
 		//draw the obj
 		glBegin(GL_QUAD);
@@ -107,9 +179,12 @@ int main() {
 			glVertex3v16(floattov16(-1.5),	floattov16(1.5), 0 );
 		
 		glEnd();
+*/
+
 		
 		glPopMatrix(1);
 			
+		//glFlush(GL_TRANS_MANUALSORT);
 		glFlush(0);
 
 		swiWaitForVBlank();
